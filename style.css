@@ -1,0 +1,726 @@
+/* =========================================================
+   1. ДИЗАЙН-ТОКЕНЫ (CSS-переменные)
+   Все цвета, отступы и радиусы задаются здесь один раз.
+   Чтобы поменять внешний вид всего сайта — меняйте эти значения.
+   ========================================================= */
+:root {
+  /* Текст и акценты */
+  --color-text: #0f1f3d;          /* тёмно-синий основной текст */
+  --color-text-muted: #55657f;    /* второстепенный текст */
+  --color-primary: #2563eb;       /* синий акцент */
+  --color-primary-dark: #1d4ed8;
+  --color-accent: #6366f1;        /* индиго — для градиентов */
+  --color-danger: #b42318;
+  --color-danger-soft: #fef3f2;
+  --color-border: #dbe2ec;
+
+  /* Поверхности (слои) — полупрозрачные, чтобы сквозь них угадывалось фото */
+  --surface-glass: rgba(255, 255, 255, 0.84);    /* светлое "матовое стекло" */
+  --surface-dark: rgba(12, 25, 50, 0.80);        /* тёмное стекло для результатов */
+  --surface-trip: linear-gradient(160deg, rgba(234, 242, 255, 0.95), rgba(224, 236, 255, 0.85));
+  --surface-costs: linear-gradient(160deg, rgba(255, 248, 238, 0.95), rgba(255, 241, 224, 0.85));
+
+  /* Цвета категорий: значок в форме и полоска в разбивке совпадают */
+  --cat-accommodation: #3b82f6;
+  --cat-food: #f59e0b;
+  --cat-transport: #14b8a6;
+  --cat-activities: #a78bfa;
+
+  /* Отступы: шкала, кратная 4px — так расстояния выглядят согласованно */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Скругления и тени */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --shadow-card: 0 2px 6px rgba(5, 15, 35, 0.10),
+                 0 24px 60px rgba(5, 15, 35, 0.35);
+  --shadow-focus: 0 0 0 4px rgba(37, 99, 235, 0.18);
+
+  /* Шрифт: Inter, а если он не загрузился — системный шрифт */
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =========================================================
+   2. БАЗОВЫЕ СТИЛИ
+   ========================================================= */
+
+/* box-sizing: border-box — ширина элемента включает отступы и рамку */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: #0f1f3d; /* цвет на долю секунды, пока грузится фото */
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+/* Контейнер ограничивает ширину контента и центрирует его */
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+/* =========================================================
+   3. ФОН: фото + затемнение
+   Фон — отдельный элемент с position: fixed. Он всегда занимает
+   весь экран и не прокручивается вместе со страницей.
+   (Свойство background-attachment: fixed для этого не годится:
+   на iPhone оно не работает.)
+   ========================================================= */
+.bg {
+  position: fixed;
+  inset: 0;          /* top, right, bottom, left = 0 → на весь экран */
+  z-index: -1;       /* позади всего контента */
+  /* Запасной фон, если фото не загрузилось: градиент "горы и море" */
+  background: linear-gradient(160deg, #1e3a5f 0%, #0f5e6e 55%, #0f766e 100%);
+}
+
+.bg-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;      /* фото заполняет экран без искажений */
+  background-position: center;
+  opacity: 0;                  /* сначала невидимо... */
+  transform: scale(1.06);
+  transition: opacity 1s ease, transform 6s ease-out;
+}
+
+/* ...а когда загрузилось, JavaScript добавляет класс — фото плавно проявляется */
+.bg-photo.is-loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Затемнение поверх фото: темнее сверху (под заголовком) и снизу,
+   чтобы белый текст читался на любом снимке */
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg,
+      rgba(8, 18, 40, 0.70) 0%,
+      rgba(8, 18, 40, 0.38) 35%,
+      rgba(8, 18, 40, 0.45) 70%,
+      rgba(8, 18, 40, 0.75) 100%);
+}
+
+/* =========================================================
+   4. ВЕРХНЯЯ ПАНЕЛЬ, ЗАГОЛОВОК, ПОДВАЛ
+   ========================================================= */
+.topbar {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* то же самое для Safari */
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+  font-size: 17px;
+  color: #fff;
+}
+
+.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45);
+  color: #fff;
+  font-size: 16px;
+}
+
+.badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.hero {
+  padding-top: var(--space-7);
+  padding-bottom: var(--space-6);
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); /* тень делает текст читаемым на фото */
+}
+
+.hero h1 {
+  font-size: clamp(28px, 4.5vw, 42px); /* размер плавно зависит от ширины экрана */
+  font-weight: 700;
+}
+
+.hero p {
+  max-width: 620px;
+  margin: var(--space-3) 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 16px;
+}
+
+.footer {
+  padding-bottom: var(--space-6);
+}
+
+/* Блок курсов валют: то же "стекло", что у верхней панели */
+.rates {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 13px;
+}
+
+.rates-head {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.rates-title {
+  font-weight: 600;
+}
+
+.rates-date {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+}
+
+.rates-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Один курс: "EUR  4,3925 zł · 1,1171 $" */
+.rate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rate-code {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rate-values {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* =========================================================
+   5. МАКЕТ И КАРТОЧКИ
+   ========================================================= */
+.layout {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr; /* форма чуть шире результатов */
+  gap: var(--space-5);
+  align-items: start;
+  padding-bottom: var(--space-6);
+}
+
+/* Общая основа карточек: "матовое стекло".
+   backdrop-filter размывает фото позади карточки. */
+.card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* Карточка формы: светлое стекло, внутри — два цветных слоя */
+.card-form {
+  padding: var(--space-3);
+  background: var(--surface-glass);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* Внутренние слои (панели) — второй уровень "многослойности" */
+.panel {
+  padding: var(--space-5);
+  border-radius: calc(var(--radius-lg) - 6px);
+}
+
+.panel + .panel {
+  margin-top: var(--space-3);
+}
+
+.panel-trip {
+  background: var(--surface-trip);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.panel-costs {
+  background: var(--surface-costs);
+  border: 1px solid rgba(234, 140, 40, 0.16);
+}
+
+.panel h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* =========================================================
+   6. ФОРМА
+   ========================================================= */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+/* У последнего поля в панели нижний отступ не нужен */
+.panel > .field:last-child,
+.panel > .field-row:last-child .field {
+  margin-bottom: 0;
+}
+
+/* Два поля в одной строке */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Цветной значок категории */
+.chip {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.chip-accommodation { background: rgba(59, 130, 246, 0.16); }
+.chip-food          { background: rgba(245, 158, 11, 0.20); }
+.chip-transport     { background: rgba(20, 184, 166, 0.18); }
+.chip-activities    { background: rgba(167, 139, 250, 0.22); }
+
+input,
+select {
+  width: 100%;
+  height: 44px;               /* 44px — удобный размер для нажатия пальцем */
+  padding: 0 var(--space-3);
+  font: inherit;               /* поля по умолчанию не наследуют шрифт страницы */
+  color: var(--color-text);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(15, 31, 61, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:hover,
+select:hover {
+  border-color: #b9c4d6;
+}
+
+/* Подсветка активного поля: важно для удобства и доступности */
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Поля с некорректным значением (JavaScript добавляет класс .is-invalid) */
+input.is-invalid {
+  border-color: var(--color-danger);
+}
+
+/* Сообщение об ошибке: скрыто, пока в нём нет текста */
+.form-message {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  border: 1px solid rgba(180, 35, 24, 0.15);
+  color: var(--color-danger);
+  font-size: 14px;
+}
+
+.form-message:empty {
+  display: none;
+}
+
+/* Кнопки */
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-3);
+}
+
+.btn {
+  height: 48px;
+  padding: 0 var(--space-5);
+  font: inherit;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Главная кнопка: заметная, с градиентом и мягким свечением */
+.btn-primary {
+  flex: 1;
+  color: #fff;
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Второстепенная кнопка: спокойная */
+.btn-reset {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--color-border);
+}
+
+.btn-reset:hover {
+  background: #fff;
+  border-color: #b9c4d6;
+}
+
+/* =========================================================
+   7. РЕЗУЛЬТАТЫ (тёмное стекло)
+   ========================================================= */
+
+/* sticky: на компьютере карточка результатов "прилипает" при прокрутке */
+.results {
+  position: sticky;
+  top: var(--space-5);
+  padding: var(--space-6);
+  background: var(--surface-dark);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.results:focus {
+  outline: none;
+}
+
+.results h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: var(--space-3);
+}
+
+.trip-summary {
+  margin: 0 0 var(--space-4);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Главный итог — самый заметный элемент страницы */
+.total-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.40),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25); /* светлый блик сверху */
+}
+
+/* Короткая анимация после нажатия "Рассчитать бюджет" */
+.total-box.is-updated {
+  animation: total-pulse 0.6s ease;
+}
+
+@keyframes total-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.03); box-shadow: 0 16px 40px rgba(99, 102, 241, 0.65); }
+  100% { transform: scale(1); }
+}
+
+.total-label {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.total-value {
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; /* цифры одинаковой ширины — суммы не "прыгают" */
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-6);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.results h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+
+/* Разбивка расходов. Разметку каждой строки создаёт JavaScript. */
+.breakdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Пока список пуст — показываем подсказку (текст задаётся прямо в CSS) */
+.breakdown:empty::before {
+  content: "Разбивка появится после ввода данных.";
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+}
+
+.breakdown-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: 14px;
+}
+
+.breakdown-name {
+  font-weight: 500;
+}
+
+.breakdown-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.breakdown-amount small {
+  margin-left: var(--space-2);
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.breakdown-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.breakdown-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: width 0.3s ease; /* полоска плавно меняет длину */
+}
+
+/* Цвет полоски по категории (класс добавляет JavaScript) */
+.breakdown-fill--accommodation { background: var(--cat-accommodation); }
+.breakdown-fill--food          { background: var(--cat-food); }
+.breakdown-fill--transport     { background: var(--cat-transport); }
+.breakdown-fill--activities    { background: var(--cat-activities); }
+
+/* =========================================================
+   8. ЗАПАСНОЙ ВАРИАНТ И ДОСТУПНОСТЬ
+   ========================================================= */
+
+/* Если браузер не умеет размывать фон — делаем карточки плотнее,
+   чтобы текст оставался читаемым */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card-form { background: rgba(255, 255, 255, 0.96); }
+  .results   { background: rgba(12, 25, 50, 0.95); }
+}
+
+/* Если человек отключил анимации в настройках системы — уважаем это */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   9. АДАПТИВНОСТЬ (media queries)
+   ========================================================= */
+
+/* Планшеты и узкие экраны: одна колонка */
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* В одной колонке "прилипание" не нужно */
+  .results {
+    position: static;
+  }
+}
+
+/* Телефоны: меньше отступов, поля и кнопки встают друг под друга */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 var(--space-3);
+  }
+
+  /* Правило выше обнуляет и нижние отступы — возвращаем их */
+  .layout,
+  .footer {
+    padding-bottom: var(--space-5);
+  }
+
+  .hero {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-5);
+  }
+
+  .card-form {
+    padding: var(--space-2);
+    border-radius: 20px;
+  }
+
+  .panel {
+    padding: var(--space-4);
+    border-radius: 14px;
+  }
+
+  .results {
+    padding: var(--space-5);
+    border-radius: 20px;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* В одноколоночной строке поле больше не "последнее" — вернём отступ */
+  .panel > .field-row:last-child .field:not(:last-child) {
+    margin-bottom: var(--space-4);
+  }
+
+  .actions {
+    flex-direction: column;
+    padding: var(--space-3) var(--space-2) var(--space-2);
+  }
+
+  /* В колонке flex: 1 сжал бы кнопку по высоте — возвращаем обычный размер */
+  .btn-primary {
+    flex: none;
+  }
+
+  .badge {
+    display: none;
+  }
+
+  .rates {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-3) var(--space-4);
+  }
+}

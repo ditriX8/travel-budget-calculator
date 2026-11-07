@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <!-- Кодировка: нужна, чтобы кириллица и символы валют отображались правильно -->
+  <meta charset="UTF-8">
+  <!-- Без этой строки телефон покажет "уменьшенную копию" десктопной страницы -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Калькулятор бюджета путешествия</title>
+  <!-- Шрифт Inter от Google Fonts. Если он не загрузится,
+       CSS подставит системный шрифт — сайт всё равно будет выглядеть аккуратно -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ФОН: фотография + затемняющий слой поверх неё.
+       Фото выбирает JavaScript (случайно при каждой загрузке).
+       aria-hidden="true" — фон декоративный, программам чтения экрана он не нужен. -->
+  <div class="bg" aria-hidden="true">
+    <div id="bg-photo" class="bg-photo"></div>
+    <div class="bg-overlay"></div>
+  </div>
+
+  <!-- Верхняя панель, как у SaaS-сервисов: логотип и метка -->
+  <nav class="topbar">
+    <div class="container topbar-inner">
+      <span class="brand"><span class="brand-logo" aria-hidden="true">✈</span> TripBudget</span>
+      <span class="badge">Бесплатный калькулятор</span>
+    </div>
+  </nav>
+
+  <header class="hero container">
+    <h1>Калькулятор бюджета путешествия</h1>
+    <p>Заполните данные поездки — итог обновляется сразу. Кнопка «Рассчитать бюджет» покажет результат.</p>
+  </header>
+
+  <main class="layout container">
+    <!-- ЛЕВАЯ КОЛОНКА: форма ввода.
+         value — пример, который виден при открытии страницы.
+         placeholder — серая подсказка в пустом поле (это не значение). -->
+    <form id="budget-form" class="card card-form" novalidate>
+
+      <!-- Слой 1: детали поездки (бледно-голубая подложка) -->
+      <section class="panel panel-trip">
+        <h2>Детали поездки</h2>
+
+        <div class="field">
+          <label for="destination">Направление</label>
+          <input type="text" id="destination" name="destination"
+                 value="Париж" placeholder="Куда едете?" maxlength="60">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="days">Дней в поездке</label>
+            <input type="number" id="days" name="days" value="5" min="1" step="1" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="nights">Ночей проживания</label>
+            <input type="number" id="nights" name="nights" value="4" min="0" step="1" placeholder="0">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="travelers">Путешественников</label>
+            <input type="number" id="travelers" name="travelers" value="2" min="1" step="1" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="currency">Валюта</label>
+            <select id="currency" name="currency">
+              <option value="EUR" selected>EUR (€)</option>
+              <option value="USD">USD ($)</option>
+              <option value="PLN">PLN (zł)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Слой 2: расходы (тёплая подложка).
+           Цвет значка каждой категории совпадает с цветом её полоски в разбивке. -->
+      <section class="panel panel-costs">
+        <h2>Расходы</h2>
+
+        <div class="field">
+          <label for="accommodation">
+            <span class="chip chip-accommodation" aria-hidden="true">🏨</span>
+            Проживание — цена за ночь
+          </label>
+          <input type="number" id="accommodation" name="accommodation" value="120" min="0" step="0.01" placeholder="0">
+        </div>
+
+        <div class="field">
+          <label for="food">
+            <span class="chip chip-food" aria-hidden="true">🍽️</span>
+            Еда — в день на человека
+          </label>
+          <input type="number" id="food" name="food" value="40" min="0" step="0.01" placeholder="0">
+        </div>
+
+        <div class="field">
+          <label for="transport">
+            <span class="chip chip-transport" aria-hidden="true">🚆</span>
+            Транспорт — общая сумма
+          </label>
+          <input type="number" id="transport" name="transport" value="300" min="0" step="0.01" placeholder="0">
+        </div>
+
+        <div class="field">
+          <label for="activities">
+            <span class="chip chip-activities" aria-hidden="true">🎟️</span>
+            Развлечения — общая сумма
+          </label>
+          <input type="number" id="activities" name="activities" value="150" min="0" step="0.01" placeholder="0">
+        </div>
+      </section>
+
+      <!-- Здесь JavaScript показывает предупреждения о некорректных значениях -->
+      <p id="form-message" class="form-message" role="alert"></p>
+
+      <div class="actions">
+        <!-- type="submit" — главная кнопка формы. Её также "нажимает" клавиша Enter.
+             JavaScript перехватывает отправку и вместо перезагрузки страницы считает бюджет. -->
+        <button type="submit" class="btn btn-primary">Рассчитать бюджет</button>
+        <!-- type="reset": по умолчанию браузер вернул бы поля к исходным value,
+             но JavaScript отменяет это и очищает все поля -->
+        <button type="reset" class="btn btn-reset">Сбросить</button>
+      </div>
+    </form>
+
+    <!-- ПРАВАЯ КОЛОНКА: результаты (тёмная полупрозрачная карточка) -->
+    <section id="results" class="card results" aria-live="polite" tabindex="-1">
+      <h2>Ваш бюджет</h2>
+      <p id="trip-summary" class="trip-summary">—</p>
+
+      <div id="total-box" class="total-box">
+        <span class="total-label">Итого</span>
+        <span id="total" class="total-value">—</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">В день</span>
+          <span id="per-day" class="stat-value">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">На человека</span>
+          <span id="per-person" class="stat-value">—</span>
+        </div>
+      </div>
+
+      <h3>Разбивка расходов</h3>
+      <!-- JavaScript создаёт здесь строки с полосками процентов -->
+      <ul id="breakdown" class="breakdown"></ul>
+    </section>
+  </main>
+
+  <!-- Нижний блок: актуальные курсы валют Национального банка Польши (NBP).
+       Строки с курсами создаёт JavaScript. -->
+  <footer class="footer container">
+    <section class="rates" aria-label="Курсы валют">
+      <div class="rates-head">
+        <span class="rates-title">Курсы валют</span>
+        <span id="rates-date" class="rates-date">загрузка…</span>
+        <span id="rates-updated" class="rates-date"></span>
+      </div>
+      <ul id="rates-list" class="rates-list"></ul>
+    </section>
+  </footer>
+
+  <!-- Скрипт подключаем в конце body: к этому моменту все элементы
+       страницы уже существуют, и JavaScript может их найти -->
+  <script src="script.js"></script>
+</body>
+</html>

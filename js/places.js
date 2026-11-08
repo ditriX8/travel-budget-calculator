@@ -253,8 +253,8 @@ function searchCities(code, query) {
     .map((x) => x.city);
 }
 
-// Подпись направления: "Рим, Италия", "Италия" или "Рим"
+// Подпись направления: "Италия, Рим", "Италия" или "Рим" (старые поездки без страны)
 function destinationLabel(city, code) {
-  const parts = [String(city || "").trim(), countryName(code)].filter(Boolean);
+  const parts = [countryName(code), String(city || "").trim()].filter(Boolean);
   return [...new Set(parts)].join(", ");
 }

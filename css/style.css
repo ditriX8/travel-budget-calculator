@@ -484,80 +484,195 @@ input:disabled {
   cursor: not-allowed;
 }
 
-.hint--field {
-  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+/* ---------- «Куда едете?»: окно выбора страны и города ---------- */
+.field-label {
+  font-size: 14px;
+  font-weight: 500;
 }
 
-/* ---------- Выпадающий список с поиском (страна, город) ---------- */
-.combo {
+.dest {
   position: relative;
 }
 
-.combo-input {
-  padding-right: 40px;
-  text-overflow: ellipsis;
+/* Само поле — кнопка, которая выглядит как поле ввода */
+.dest-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  text-align: left;
+  background: #fff;
+  border: 1px solid #d8d0c2;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 rgba(19, 33, 58, 0.03);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-/* Стрелка справа в поле; поворачивается, когда список открыт */
-.combo-arrow {
-  position: absolute;
-  top: 50%;
-  right: 16px;
+.dest-trigger:hover {
+  border-color: #b9ae9c;
+}
+
+.dest-trigger:focus-visible,
+.dest.is-open .dest-trigger {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: var(--focus-ring);
+}
+
+.dest-icon {
+  font-size: 15px;
+}
+
+.dest-display {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.dest-trigger.is-placeholder .dest-display {
+  color: #8a94a3;
+  font-weight: 400;
+}
+
+.dest-arrow {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
-  margin-top: -6px;
+  margin: -4px 6px 0 0;
   border-right: 2px solid var(--muted);
   border-bottom: 2px solid var(--muted);
   transform: rotate(45deg);
-  transition: transform 0.2s;
-  pointer-events: none;
+  transition: transform 0.2s, margin 0.2s;
 }
 
-.combo.is-open .combo-arrow {
-  margin-top: -2px;
+.dest.is-open .dest-arrow {
+  margin-top: 4px;
   transform: rotate(-135deg);
 }
 
-.combo-list {
+/* Выпадающее окно прямо под полем */
+.dest-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
   z-index: 30;
-  min-width: 220px;
-  margin: 0;
-  padding: 6px;
-  list-style: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  box-shadow: 0 18px 44px rgba(8, 15, 28, 0.22), 0 2px 6px rgba(8, 15, 28, 0.08);
-  overflow-y: auto;
-  overscroll-behavior: contain; /* прокрутка списка не прокручивает страницу */
-  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 22px 50px rgba(8, 15, 28, 0.24), 0 2px 6px rgba(8, 15, 28, 0.08);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-4px) scale(0.98);
+  transform: translateY(-6px) scale(0.98);
   transform-origin: top center;
-  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
 }
 
-.combo.is-open .combo-list {
+.dest.is-open .dest-panel {
   opacity: 1;
   visibility: visible;
   transform: none;
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-/* Если снизу мало места — список открывается вверх */
-.combo.is-above .combo-list {
+/* Мало места снизу — окно открывается вверх */
+.dest.is-above .dest-panel {
   top: auto;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 8px);
   transform-origin: bottom center;
 }
 
+.dest-step {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  animation: step-in 0.18s ease;
+}
+
+.dest-step[hidden] {
+  display: none;
+}
+
+@keyframes step-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.dest-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.dest-title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 19px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dest-back {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-sky);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dest-back:hover {
+  background: #dfe9f3;
+}
+
+.dest-search {
+  padding: var(--space-3) var(--space-3) var(--space-3);
+  border-bottom: 1px solid #efe9df;
+}
+
+/* Строка поиска с иконкой лупы */
+.dest-search-input {
+  height: 42px;
+  padding-left: 38px;
+  background: #faf8f4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%235a6779' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 3.5 3.5'/%3E%3C/svg%3E") no-repeat 13px center;
+}
+
+.dest-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* прокрутка списка не прокручивает страницу */
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Заголовок группы остаётся видимым при прокрутке */
-.combo-group {
+.dest-group {
   position: sticky;
   top: -6px;
   z-index: 1;
@@ -570,10 +685,9 @@ input:disabled {
   text-transform: uppercase;
 }
 
-.combo-option {
+.dest-option {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
   min-height: 44px; /* удобно попадать пальцем */
   padding: 8px 12px;
@@ -583,30 +697,69 @@ input:disabled {
   cursor: pointer;
 }
 
-.combo-option.is-active {
+.dest-option-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.dest-option.is-active {
   background: rgba(228, 87, 46, 0.10);
   color: #8f2d10;
 }
 
-.combo-option.is-active .combo-label {
+.dest-option.is-current .dest-option-label {
   font-weight: 600;
 }
 
-.combo-hint {
+.dest-option-hint {
   flex-shrink: 0;
   color: var(--muted);
   font-size: 13px;
 }
 
-.combo-option--custom .combo-label {
+.dest-option--custom .dest-option-label {
   font-style: italic;
 }
 
-.combo-empty {
-  padding: 16px 12px;
+.dest-check {
+  flex-shrink: 0;
+  color: var(--coral-strong);
+  font-weight: 700;
+}
+
+.dest-empty {
+  padding: 18px 14px;
   color: var(--muted);
   font-size: 14px;
   text-align: center;
+}
+
+.dest-foot {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-top: 1px solid #efe9df;
+}
+
+.dest-skip {
+  padding: 6px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.dest-skip:hover {
+  color: var(--text);
+}
+
+.dest-back:focus-visible,
+.dest-skip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .form-message {
@@ -1436,9 +1589,6 @@ input:disabled {
     font-size: 16px;
   }
 
-  .hint--field {
-    margin-top: 0;
-  }
 
   .panel > .field-row:last-child .field:not(:last-child) {
     margin-bottom: var(--space-4);

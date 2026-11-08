@@ -46,7 +46,7 @@ function tripNumbers(trip) {
   return values;
 }
 
-// Название поездки: "Рим, Италия". Старые поездки (без страны) — просто город.
+// Название поездки: "Италия, Рим". Старые поездки (без страны) — просто город.
 function tripName(fields) {
   return destinationLabel(fields.destination, fields.countryCode) || "Без названия";
 }

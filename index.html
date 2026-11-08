@@ -85,28 +85,56 @@
         <section class="panel panel-trip" aria-labelledby="trip-heading">
           <h2 id="trip-heading">Детали поездки</h2>
 
-          <!-- Направление: страна и город с выпадающими списками и поиском (js/combobox.js).
-               Город хранится в поле с id="destination" — так открываются и старые сохранённые поездки. -->
-          <div class="field-row">
-            <div class="field">
-              <label for="country">Страна</label>
-              <div class="combo">
-                <input type="text" id="country" name="country" class="combo-input"
-                       value="Франция" placeholder="Выберите страну" maxlength="60" spellcheck="false">
-                <span class="combo-arrow" aria-hidden="true"></span>
-              </div>
+          <!-- «Куда едете?»: кнопка-поле открывает окно выбора в два шага —
+               страна (поиск + популярные + все), затем город (свой поиск + кнопка «назад»).
+               Выбранные значения хранятся в скрытых полях: countryCode — код страны,
+               destination — город (то же имя, что раньше, — старые поездки открываются). -->
+          <div class="field">
+            <span class="field-label" id="dest-label">Куда едете?</span>
+            <div class="dest" id="dest">
+              <button type="button" id="dest-trigger" class="dest-trigger"
+                      aria-haspopup="dialog" aria-expanded="false" aria-controls="dest-panel"
+                      aria-labelledby="dest-label dest-display">
+                <span class="dest-icon" aria-hidden="true">📍</span>
+                <span id="dest-display" class="dest-display">Франция, Париж</span>
+                <span class="dest-arrow" aria-hidden="true"></span>
+              </button>
               <input type="hidden" id="countryCode" name="countryCode" value="FR">
-            </div>
-            <div class="field">
-              <label for="destination">Город</label>
-              <div class="combo">
-                <input type="text" id="destination" name="destination" class="combo-input"
-                       value="Париж" placeholder="Город" maxlength="60" spellcheck="false" aria-describedby="city-hint">
-                <span class="combo-arrow" aria-hidden="true"></span>
+              <input type="hidden" id="destination" name="destination" value="Париж">
+
+              <div id="dest-panel" class="dest-panel" role="dialog" aria-label="Выбор направления">
+                <!-- Шаг 1: страна -->
+                <div class="dest-step" data-step="country">
+                  <div class="dest-head">
+                    <span class="dest-title">Выберите страну</span>
+                  </div>
+                  <div class="dest-search">
+                    <input type="text" id="country-search" class="dest-search-input" placeholder="Поиск страны, например «Ита»"
+                           autocomplete="off" spellcheck="false" aria-label="Поиск страны">
+                  </div>
+                  <ul id="country-list" class="dest-list" role="listbox" aria-label="Страны"></ul>
+                </div>
+
+                <!-- Шаг 2: город -->
+                <div class="dest-step" data-step="city" hidden>
+                  <div class="dest-head">
+                    <button type="button" id="dest-back" class="dest-back">
+                      <span aria-hidden="true">←</span> Страны
+                    </button>
+                    <span id="dest-city-title" class="dest-title"></span>
+                  </div>
+                  <div class="dest-search">
+                    <input type="text" id="city-search" class="dest-search-input" placeholder="Поиск города"
+                           autocomplete="off" spellcheck="false" aria-label="Поиск города">
+                  </div>
+                  <ul id="city-list" class="dest-list" role="listbox" aria-label="Города"></ul>
+                  <div class="dest-foot">
+                    <button type="button" id="dest-skip-city" class="dest-skip">Без города — только страна</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <p id="city-hint" class="hint hint--field">Популярные города страны — в списке; любой другой можно вписать вручную.</p>
 
           <div class="field-row">
             <div class="field">
@@ -292,7 +320,7 @@
   <script src="js/places.js" defer></script>
   <script src="js/rates.js" defer></script>
   <script src="js/trips.js" defer></script>
-  <script src="js/combobox.js" defer></script>
+  <script src="js/destination.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/tests.js" defer></script>
 </body>

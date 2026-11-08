@@ -17,7 +17,7 @@ savings tips, and a printable PDF report.
 
 | | |
 |---|---|
-| **Destination picker** | Searchable country and city dropdowns: all 244 countries and territories (popular destinations first, then A–Z), 500+ real tourist cities for 80 countries, live filtering in Russian or English, search by city ("Рим" → Italy), keyboard navigation, and free input for any other city. |
+| **Destination picker** | One field, *«Куда едете?»*, opens a two-step dropdown: **country** (search, popular destinations, then all 244 countries A–Z) → **city** (its own search, popular cities, a back button). The result reads *«Италия, Рим»*. Live filtering in Russian or English, search by city ("рим" → Italy), keyboard support, and a custom option for cities that aren't listed. |
 | **Instant calculation** | Totals update as you type: total, cost per day, cost per person and a colour-coded breakdown with exact percentages (always adding up to 100%). |
 | **Live exchange rates** | Average rates from the official [NBP API](https://api.nbp.pl/) (table A), refreshed on every visit and hourly. Shows 1 EUR → PLN, 1 USD → PLN, 1 USD → EUR with the rate date and last update time. |
 | **Currency conversion** | The trip total is converted into the other two currencies automatically. |
@@ -32,7 +32,10 @@ savings tips, and a printable PDF report.
   <img src="docs/screenshot-pdf.jpg" alt="Printable PDF budget report" width="49%">
 </p>
 
-![Saved trips](docs/screenshot-trips.jpg)
+<p>
+  <img src="docs/screenshot-destination.jpg" alt="Destination picker: country step, then city step with search" width="49%">
+  <img src="docs/screenshot-trips.jpg" alt="Saved trips" width="49%">
+</p>
 
 ---
 
@@ -65,11 +68,11 @@ travel-budget-calculator/
 ├── js/
 │   ├── core.js           # pure functions: calculations, validation, tips, conversion, formatting
 │   ├── places.js         # countries (ISO codes + browser's Intl.DisplayNames) and curated tourist cities
-│   ├── combobox.js       # accessible searchable dropdown (WAI-ARIA combobox pattern)
+│   ├── destination.js    # «Куда едете?» two-step country → city picker (WAI-ARIA combobox/listbox)
 │   ├── rates.js          # NBP exchange rates: loading, caching, rendering
 │   ├── trips.js          # saved trips: list operations and localStorage
 │   ├── app.js            # UI: form, results, trips, toasts, PDF report, background
-│   └── tests.js          # 90 automated tests — run runTests() in the browser console
+│   └── tests.js          # 91 automated tests — run runTests() in the browser console
 ├── assets/
 │   ├── img/bg/           # 12 landscape photos (WebP, 1600px and 960px)
 │   ├── fonts/            # Inter and Prata (WOFF2, Latin + Cyrillic)
@@ -84,7 +87,8 @@ travel-budget-calculator/
 - **Countries:** all ISO 3166-1 codes; names come from the browser's built-in `Intl.DisplayNames`
   (Russian and English), with friendlier overrides ("США") and search aliases ("Англия").
 - **Cities:** a hand-checked list of real popular tourist cities in `js/places.js` (`CITIES`),
-  ordered by popularity. Any other city can be typed in manually.
+  ordered by popularity. A city that isn't listed can still be chosen via the search
+  (*«Выбрать «…»»*), or the trip can be saved with the country only.
 - **Scaling:** add a country code and its cities to `CITIES`. For a complete world city list,
   the free [GeoNames](https://www.geonames.org/) dataset (CC BY 4.0) could be pre-processed into
   small per-country JSON files loaded on demand — no API key or server needed.
@@ -117,7 +121,7 @@ custom fonts for `file://` pages, so system fonts are used there.)
 ## Testing
 
 - **Unit tests:** open the site, press `F12` → *Console*, run `runTests()`.
-  90 tests cover calculations, rounding, validation, percentages, budget limits and tips,
+  91 tests cover calculations, rounding, validation, percentages, budget limits and tips,
   currency conversion, NBP response parsing, country/city search, saved-trip operations
   and the background picker.
 - **End-to-end checks** (Playwright) were run for: calculation and conversion, limit and tips,

@@ -151,7 +151,8 @@ function runTests() {
   check("Страна без списка городов → пусто", searchCities("TV", ""), []);
   check("Каждая страна с городами есть в списке стран", Object.keys(CITIES).every((c) => COUNTRY_BY_CODE[c]), true);
   check("В списках городов нет повторов", Object.values(CITIES).every((l) => new Set(l).size === l.length), true);
-  check("Подпись: «Рим, Италия»", destinationLabel("Рим", "IT"), "Рим, Италия");
+  check("Подпись в формате «Страна, Город»: «Италия, Рим»", destinationLabel("Рим", "IT"), "Италия, Рим");
+  check("Только страна: «Италия»", destinationLabel("", "IT"), "Италия");
   check("Подпись без повтора: Сингапур", destinationLabel("Сингапур", "SG"), "Сингапур");
   check("Старая поездка без страны: только город", destinationLabel("Москва", ""), "Москва");
   check("Название поездки: пусто → «Без названия»", tripName({ destination: "" }), "Без названия");

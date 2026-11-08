@@ -85,11 +85,28 @@
         <section class="panel panel-trip" aria-labelledby="trip-heading">
           <h2 id="trip-heading">Детали поездки</h2>
 
-          <div class="field">
-            <label for="destination">Направление</label>
-            <input type="text" id="destination" name="destination"
-                   value="Париж" placeholder="Куда едете?" maxlength="60" autocomplete="off">
+          <!-- Направление: страна и город с выпадающими списками и поиском (js/combobox.js).
+               Город хранится в поле с id="destination" — так открываются и старые сохранённые поездки. -->
+          <div class="field-row">
+            <div class="field">
+              <label for="country">Страна</label>
+              <div class="combo">
+                <input type="text" id="country" name="country" class="combo-input"
+                       value="Франция" placeholder="Выберите страну" maxlength="60" spellcheck="false">
+                <span class="combo-arrow" aria-hidden="true"></span>
+              </div>
+              <input type="hidden" id="countryCode" name="countryCode" value="FR">
+            </div>
+            <div class="field">
+              <label for="destination">Город</label>
+              <div class="combo">
+                <input type="text" id="destination" name="destination" class="combo-input"
+                       value="Париж" placeholder="Город" maxlength="60" spellcheck="false" aria-describedby="city-hint">
+                <span class="combo-arrow" aria-hidden="true"></span>
+              </div>
+            </div>
           </div>
+          <p id="city-hint" class="hint hint--field">Популярные города страны — в списке; любой другой можно вписать вручную.</p>
 
           <div class="field-row">
             <div class="field">
@@ -272,8 +289,10 @@
   <section id="print-report" class="print-report" aria-hidden="true"></section>
 
   <script src="js/core.js" defer></script>
+  <script src="js/places.js" defer></script>
   <script src="js/rates.js" defer></script>
   <script src="js/trips.js" defer></script>
+  <script src="js/combobox.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/tests.js" defer></script>
 </body>

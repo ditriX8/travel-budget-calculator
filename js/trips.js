@@ -6,7 +6,8 @@
    ========================================================= */
 
 const TRIPS_STORAGE_KEY = "tripbudget.trips.v1";
-const TRIP_FIELDS = ["destination", ...Object.keys(FIELD_RULES)];
+// destination — город, countryCode — код страны (ISO), остальные — числа формы
+const TRIP_FIELDS = ["destination", "countryCode", ...Object.keys(FIELD_RULES)];
 
 /* ---------- Чистые функции ---------- */
 
@@ -43,6 +44,11 @@ function tripNumbers(trip) {
     values[id] = validateValue(trip.fields[id] ?? "", rule).value;
   }
   return values;
+}
+
+// Название поездки: "Рим, Италия". Старые поездки (без страны) — просто город.
+function tripName(fields) {
+  return destinationLabel(fields.destination, fields.countryCode) || "Без названия";
 }
 
 function makeTripId() {

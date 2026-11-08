@@ -8,7 +8,10 @@
 const form = document.getElementById("budget-form");
 const $ = (id) => document.getElementById(id);
 const el = {
-  destination: $("destination"),
+  destination: $("destination"), // поле «Город»
+  country: $("country"),
+  countryCode: $("countryCode"),
+  cityHint: $("city-hint"),
   currency: $("currency"),
   message: $("form-message"),
   summary: $("trip-summary"),
@@ -76,7 +79,7 @@ function readForm(showAllErrors = false) {
   }
 
   return {
-    destination: el.destination.value.trim(),
+    destination: destinationLabel(el.destination.value, el.countryCode.value),
     currency: el.currency.value,
     values,
     errors,
@@ -84,7 +87,7 @@ function readForm(showAllErrors = false) {
 }
 
 function isBlank() {
-  return isFormBlank([el.destination.value, ...numberInputs.map((i) => i.value)])
+  return isFormBlank([el.country.value, el.destination.value, ...numberInputs.map((i) => i.value)])
     && !numberInputs.some((i) => i.validity.badInput);
 }
 
@@ -223,6 +226,7 @@ function clearForm() {
   for (const input of form.querySelectorAll("input")) input.value = "";
   state.touched.clear();
   setEditing(null);
+  updateCityState();
   update();
 }
 
@@ -233,7 +237,7 @@ function clearForm() {
 function setEditing(trip) {
   state.editingId = trip ? trip.id : null;
   el.editBanner.hidden = !trip;
-  el.editName.textContent = trip ? (trip.fields.destination || "Без названия") : "";
+  el.editName.textContent = trip ? tripName(trip.fields) : "";
   el.saveBtn.textContent = trip ? "Сохранить изменения" : "Сохранить поездку";
   for (const card of el.tripsList.children) {
     card.classList.toggle("is-active", card.dataset.id === state.editingId);
@@ -277,7 +281,7 @@ function saveCurrentTrip() {
 
   if (persistTrips(upsertTrip(state.trips, trip))) {
     setEditing(trip);
-    const name = fields.destination || "Без названия";
+    const name = tripName(fields);
     showToast(existing ? `Изменения в «${name}» сохранены.` : `Поездка «${name}» сохранена.`, { type: "success" });
   }
 }
@@ -286,7 +290,9 @@ function openTrip(id) {
   const trip = state.trips.find((t) => t.id === id);
   if (!trip) return;
   for (const fieldId of TRIP_FIELDS) $(fieldId).value = trip.fields[fieldId] ?? "";
+  el.country.value = countryName(el.countryCode.value); // название страны — по её коду
   el.currency.value = trip.currency;
+  updateCityState();
   state.touched.clear();
   setEditing(trip);
   update();
@@ -301,7 +307,7 @@ function deleteTrip(id) {
   if (!persistTrips(removeTrip(state.trips, id))) return;
   if (state.editingId === id) setEditing(null);
 
-  const name = trip.fields.destination || "Без названия";
+  const name = tripName(trip.fields);
   showToast(`Поездка «${name}» удалена.`, {
     action: {
       label: "Отменить",
@@ -332,7 +338,7 @@ function renderTrips() {
     const values = tripNumbers(trip);
     const result = calculateBudget(values);
     const status = limitStatus(result.total, values.limit);
-    const name = trip.fields.destination || "Без названия";
+    const name = tripName(trip.fields);
 
     const card = document.createElement("li");
     card.className = "trip-card";
@@ -560,6 +566,120 @@ function setupBackground() {
 }
 
 /* =========================================================
+   5б. ВЫБОР НАПРАВЛЕНИЯ: СТРАНА И ГОРОД
+   Данные — в places.js, выпадающий список — в combobox.js.
+   ========================================================= */
+
+// Выбрать страну. Если страна поменялась — город сбрасывается,
+// чтобы случайно не остался город из другой страны.
+function selectCountry(code, { city = "" } = {}) {
+  const changed = code !== el.countryCode.value;
+  el.countryCode.value = code;
+  el.country.value = countryName(code);
+  if (changed || city) el.destination.value = city;
+  state.touched.add("country");
+  updateCityState();
+  update();
+  return changed;
+}
+
+// Поле «Город» доступно после выбора страны (или если город уже вписан — старые поездки)
+function updateCityState() {
+  const code = el.countryCode.value;
+  const hasCities = Boolean(CITIES[code]);
+  el.destination.disabled = !code && !el.destination.value;
+  el.destination.placeholder = !code ? "Сначала выберите страну" : hasCities ? "Выберите город" : "Впишите город";
+  el.cityHint.textContent = !code
+    ? "Сначала выберите страну — появятся её популярные города."
+    : hasCities
+      ? "Популярные города страны — в списке; любой другой можно вписать вручную."
+      : "Для этой страны впишите город вручную.";
+}
+
+// Если в поле уже выбранная страна — показываем весь список, а не фильтр по её названию
+function isCurrentValue(query, current) {
+  return Boolean(current) && normalizeSearch(query) === normalizeSearch(current);
+}
+
+createCombobox({
+  input: el.country,
+  getGroups(query) {
+    const q = isCurrentValue(query, countryName(el.countryCode.value)) ? "" : query;
+    const result = searchCountries(q);
+    const toItem = (c) => ({ value: c.code, label: c.name });
+    if (result.popular) {
+      return {
+        groups: [
+          { label: "Популярные направления", items: result.popular.map(toItem) },
+          { label: "Все страны", items: result.others.map(toItem) },
+        ],
+        empty: "",
+      };
+    }
+    return {
+      groups: [{
+        label: null,
+        items: result.matches.map((m) => ({
+          ...toItem(m.country),
+          city: m.via,                       // нашли по городу: "Рим" → Италия
+          hint: m.via ? `город ${m.via}` : "",
+        })),
+      }],
+      empty: `Страна «${query.trim()}» не найдена. Проверьте название — можно писать по-русски или по-английски.`,
+    };
+  },
+  onSelect(item) {
+    const changed = selectCountry(item.value, { city: item.city || "" });
+    // Страна выбрана, а город ещё нет — сразу предлагаем города
+    if ((changed || !el.destination.value) && !item.city) el.destination.focus();
+  },
+});
+
+// Если страну вписали, но не выбрали из списка: точное название принимаем,
+// иначе возвращаем прежний выбор — в поле не останется "непонятной" страны
+el.country.addEventListener("blur", () => {
+  const text = el.country.value.trim();
+  if (!text) {
+    if (el.countryCode.value) selectCountry("");
+    return;
+  }
+  const match = findCountryByName(text);
+  if (match) {
+    if (match.code !== el.countryCode.value || el.country.value !== match.name) selectCountry(match.code);
+  } else {
+    el.country.value = countryName(el.countryCode.value);
+  }
+});
+
+createCombobox({
+  input: el.destination,
+  getGroups(query) {
+    const code = el.countryCode.value;
+    const all = CITIES[code] || [];
+    const text = query.trim();
+    const showAll = !text || all.some((c) => isCurrentValue(text, c));
+    const matches = showAll ? all : searchCities(code, text);
+    const groups = [{
+      label: all.length ? "Популярные города" : null,
+      items: matches.map((c) => ({ value: c, label: c })),
+    }];
+    // Города нет в списке — можно оставить свой вариант
+    if (text && !showAll) {
+      groups.push({ label: "Свой вариант", items: [{ value: text, label: `Оставить «${text}»`, hint: "нет в списке популярных", custom: true }] });
+    }
+    return {
+      groups,
+      empty: code ? "Для этой страны нет списка городов — впишите город вручную." : "Сначала выберите страну.",
+    };
+  },
+  onSelect(item) {
+    el.destination.value = item.value;
+    state.touched.add("destination");
+    update();
+  },
+});
+
+/* =========================================================
    6. СОБЫТИЯ И ЗАПУСК
    ========================================================= */
 
@@ -621,6 +741,7 @@ Rates.onChange(() => renderConversion());
 
 state.trips = TripStore.load();
 renderTrips();
+updateCityState();
 update();
 setupBackground();
 startRates();

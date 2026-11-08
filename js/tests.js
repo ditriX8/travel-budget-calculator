@@ -127,7 +127,36 @@ function runTests() {
   check("Числа поездки: неверные значения → 0", tripNumbers({ fields: { days: "abc", food: "-5", nights: "2" } }).days, 0);
   check("Числа поездки: правильные значения читаются", tripNumbers({ fields: { nights: "2" } }).nights, 2);
 
-  // 15. Случайный фон
+  // 15. Страны и города
+  check("Стран в списке больше 240", COUNTRIES.length > 240, true);
+  check("Список стран — по алфавиту", COUNTRIES[0].name, "Австралия");
+  const empty = searchCountries("");
+  check("Без запроса: 20 популярных сверху, остальные ниже, без повторов",
+    [empty.popular.length, empty.popular.length + empty.others.length], [20, COUNTRIES.length]);
+  check("Первое популярное направление — Италия", empty.popular[0].name, "Италия");
+  check("«ита» → Италия первой", searchCountries("ита").matches[0].country.code, "IT");
+  check("По-английски: «spain» → Испания", searchCountries("spain").matches[0].country.code, "ES");
+  check("Синоним: «Англия» → Великобритания", searchCountries("англия").matches[0].country.code, "GB");
+  check("Буква ё не важна: «турция» и «ТУРЦИЯ»", searchCountries("ТУРЦИЯ").matches[0].country.code, "TR");
+  const byCity = searchCountries("рим").matches[0];
+  check("По городу: «рим» → Италия (через город Рим)", [byCity.country.code, byCity.via], ["IT", "Рим"]);
+  check("При равных совпадениях популярные первыми: «гре» → Греция", searchCountries("гре").matches[0].country.code, "GR");
+  check("Ничего не найдено → пустой список", searchCountries("ыыыыы").matches.length, 0);
+  check("Точное название страны распознаётся", findCountryByName("  франция ").code, "FR");
+  check("Неточное название не распознаётся", findCountryByName("франц"), null);
+  check("США — привычное название", countryName("US"), "США");
+  check("Города Италии: популярные первыми", searchCities("IT", "").slice(0, 3), ["Рим", "Венеция", "Флоренция"]);
+  check("Поиск города: «фл» → Флоренция", searchCities("IT", "фл"), ["Флоренция"]);
+  check("Поиск по части слова: «крус» → Санта-Крус-де-Тенерифе", searchCities("ES", "крус"), ["Санта-Крус-де-Тенерифе"]);
+  check("Страна без списка городов → пусто", searchCities("TV", ""), []);
+  check("Каждая страна с городами есть в списке стран", Object.keys(CITIES).every((c) => COUNTRY_BY_CODE[c]), true);
+  check("В списках городов нет повторов", Object.values(CITIES).every((l) => new Set(l).size === l.length), true);
+  check("Подпись: «Рим, Италия»", destinationLabel("Рим", "IT"), "Рим, Италия");
+  check("Подпись без повтора: Сингапур", destinationLabel("Сингапур", "SG"), "Сингапур");
+  check("Старая поездка без страны: только город", destinationLabel("Москва", ""), "Москва");
+  check("Название поездки: пусто → «Без названия»", tripName({ destination: "" }), "Без названия");
+
+  // 16. Случайный фон
   let repeats = 0;
   let outOfRange = 0;
   for (let last = 0; last < 12; last++) {

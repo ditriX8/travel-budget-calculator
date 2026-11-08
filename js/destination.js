@@ -3,6 +3,7 @@
    Поле «Куда едете?»: окно выбора направления в два шага.
      Шаг 1 — страна: поиск, популярные направления, затем все страны.
      Шаг 2 — город: свой поиск, популярные города, кнопка «← Страны».
+     Выбрать можно только реальный город из списка (places.js) — свой текст не принимается.
    Результат показывается в поле как «Италия, Рим» и хранится
    в скрытых полях countryCode и destination (город).
 
@@ -47,7 +48,6 @@ function createSearchList({ input, list, getGroups, onPick }) {
         li.setAttribute("role", "option");
         li.setAttribute("aria-selected", "false");
         if (item.value === selected) li.classList.add("is-current");
-        if (item.custom) li.classList.add("dest-option--custom");
 
         const label = document.createElement("span");
         label.className = "dest-option-label";
@@ -202,26 +202,24 @@ function createDestinationPicker({ root, onChange }) {
     input: citySearch,
     list: q("#city-list"),
     getGroups(query) {
+      // Выбрать можно только реальный город из списка — свой текст не принимается
       const code = codeInput.value;
       const all = CITIES[code] || [];
       const text = query.trim();
       const matches = text ? searchCities(code, text) : all;
-      const groups = [{
-        label: all.length && !text ? "Популярные города" : null,
-        items: matches.map((c) => ({ value: c, label: c })),
-      }];
-      // Города нет в списке — его можно выбрать как свой вариант
-      const exact = matches.some((c) => normalizeSearch(c) === normalizeSearch(text));
-      if (text && !exact) {
-        groups.push({
-          label: matches.length ? "Свой вариант" : null,
-          items: [{ value: text, label: `Выбрать «${text}»`, hint: "нет в списке популярных", custom: true }],
-        });
+      let empty;
+      if (!all.length) {
+        empty = "Для этой страны пока нет списка городов. Нажмите «Без города — только страна» ниже.";
+      } else {
+        empty = `Город «${text}» не найден в списке. Проверьте название или выберите город из списка.`;
       }
       return {
         selected: cityInput.value,
-        empty: "Для этой страны нет списка популярных городов. Начните вводить название города в поиске.",
-        groups,
+        empty,
+        groups: [{
+          label: all.length && !text ? "Популярные города" : null,
+          items: matches.map((c) => ({ value: c, label: c })),
+        }],
       };
     },
     onPick(item) {

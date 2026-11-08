@@ -717,10 +717,6 @@ input:disabled {
   font-size: 13px;
 }
 
-.dest-option--custom .dest-option-label {
-  font-style: italic;
-}
-
 .dest-check {
   flex-shrink: 0;
   color: var(--coral-strong);

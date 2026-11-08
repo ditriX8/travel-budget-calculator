@@ -17,7 +17,7 @@ savings tips, and a printable PDF report.
 
 | | |
 |---|---|
-| **Destination picker** | One field, *«Куда едете?»*, opens a two-step dropdown: **country** (search, popular destinations, then all 244 countries A–Z) → **city** (its own search, popular cities, a back button). The result reads *«Италия, Рим»*. Live filtering in Russian or English, search by city ("рим" → Italy), keyboard support, and a custom option for cities that aren't listed. |
+| **Destination picker** | One field, *«Куда едете?»*, opens a two-step dropdown: **country** (search, popular destinations, then all 244 countries A–Z) → **city** (its own search, popular cities, a back button). The result reads *«Италия, Рим»*. Live filtering in Russian or English, search by city ("рим" → Italy) and keyboard support. Only real cities from the list can be chosen — made-up names are rejected. |
 | **Instant calculation** | Totals update as you type: total, cost per day, cost per person and a colour-coded breakdown with exact percentages (always adding up to 100%). |
 | **Live exchange rates** | Average rates from the official [NBP API](https://api.nbp.pl/) (table A), refreshed on every visit and hourly. Shows 1 EUR → PLN, 1 USD → PLN, 1 USD → EUR with the rate date and last update time. |
 | **Currency conversion** | The trip total is converted into the other two currencies automatically. |
@@ -87,8 +87,8 @@ travel-budget-calculator/
 - **Countries:** all ISO 3166-1 codes; names come from the browser's built-in `Intl.DisplayNames`
   (Russian and English), with friendlier overrides ("США") and search aliases ("Англия").
 - **Cities:** a hand-checked list of real popular tourist cities in `js/places.js` (`CITIES`),
-  ordered by popularity. A city that isn't listed can still be chosen via the search
-  (*«Выбрать «…»»*), or the trip can be saved with the country only.
+  ordered by popularity. Only cities from this list can be selected (no free text), so a
+  destination is always a real place; a trip can also be saved with the country only.
 - **Scaling:** add a country code and its cities to `CITIES`. For a complete world city list,
   the free [GeoNames](https://www.geonames.org/) dataset (CC BY 4.0) could be pre-processed into
   small per-country JSON files loaded on demand — no API key or server needed.

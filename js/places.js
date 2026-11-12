@@ -253,6 +253,82 @@ function searchCities(code, query) {
     .map((x) => x.city);
 }
 
+/* ---------- Полный список городов (GeoNames) ----------
+   Все города страны лежат в assets/data/cities/КОД.json — их собирает
+   scripts/build-cities.py из открытой базы GeoNames (CC BY 4.0).
+   Файл скачивается только когда выбрана страна, и запоминается. */
+
+const CITY_DATA_VERSION = "2026-11-12";  // менять после пересборки файлов городов
+const CITY_SUGGEST_LIMIT = 20;            // сколько крупных городов показать без поиска
+const CITY_SEARCH_LIMIT = 50;             // сколько найденных городов показать при поиске
+const cityDataCache = new Map();          // код страны → { status, cities }
+const NO_CITY_DATA = new Set(["AQ"]);      // Антарктида — городов нет, файл не запрашиваем
+
+// Чистая функция: популярные города + полный список, без повторов.
+// Город — { name, latin, hint, popular, rank }; hint — регион для одинаковых названий.
+function buildCityList(popular, full) {
+  const seen = new Set(popular.map(normalizeSearch));
+  const list = popular.map((name, i) => ({ name, latin: "", hint: "", popular: true, rank: i }));
+  full.forEach(([name, latin = "", hint = ""], i) => {
+    const key = normalizeSearch(name);
+    if (!hint && seen.has(key)) return; // этот город уже есть среди популярных
+    if (!hint) seen.add(key);
+    list.push({ name, latin, hint, popular: false, rank: popular.length + i });
+  });
+  return list;
+}
+
+// Что сохраняется при выборе: "Портленд (Орегон)" для одинаковых названий, иначе "Рим"
+function cityValue(city) {
+  return city.hint ? `${city.name} (${city.hint})` : city.name;
+}
+
+// Чистая функция: поиск по названию (русскому или латинскому).
+// Лучшие совпадения первыми; при равных — популярные и крупные города.
+function filterCities(list, query, limit = CITY_SEARCH_LIMIT) {
+  const q = normalizeSearch(query);
+  if (!q) return { items: list.slice(0, limit), total: list.length };
+  const scored = [];
+  for (const city of list) {
+    const scores = [city.name, city.latin].filter(Boolean).map((n) => matchScore(n, q)).filter((s) => s !== null);
+    if (scores.length) scored.push({ city, score: Math.min(...scores) });
+  }
+  scored.sort((a, b) => a.score - b.score || a.city.rank - b.city.rank);
+  return { items: scored.slice(0, limit).map((x) => x.city), total: scored.length };
+}
+
+// Загрузить все города страны (один раз). Состояние: "loading" → "ready" или "error".
+function loadCityData(code) {
+  const cached = cityDataCache.get(code);
+  if (cached && cached.status !== "error") return cached.promise; // после ошибки — пробуем снова
+  const entry = { status: "loading", cities: [], promise: null };
+  if (NO_CITY_DATA.has(code)) {
+    entry.status = "ready";
+    entry.promise = Promise.resolve();
+    cityDataCache.set(code, entry);
+    return entry.promise;
+  }
+  entry.promise = fetch(`assets/data/cities/${code}.json?v=${CITY_DATA_VERSION}`)
+    .then((response) => {
+      if (response.status === 404) return { cities: [] }; // для страны нет файла — только популярные
+      if (!response.ok) throw new Error(`Код ответа ${response.status}`);
+      return response.json();
+    })
+    .then((data) => {
+      entry.cities = Array.isArray(data.cities) ? data.cities.filter((c) => Array.isArray(c) && typeof c[0] === "string") : [];
+      entry.status = "ready";
+    })
+    .catch(() => {
+      entry.status = "error";
+    });
+  cityDataCache.set(code, entry);
+  return entry.promise;
+}
+
+function cityDataStatus(code) {
+  return cityDataCache.get(code) || { status: "loading", cities: [] };
+}
+
 // Подпись направления: "Италия, Рим", "Италия" или "Рим" (старые поездки без страны)
 function destinationLabel(city, code) {
   const parts = [countryName(code), String(city || "").trim()].filter(Boolean);

@@ -3,7 +3,9 @@
    Поле «Куда едете?»: окно выбора направления в два шага.
      Шаг 1 — страна: поиск, популярные направления, затем все страны.
      Шаг 2 — город: свой поиск, популярные города, кнопка «← Страны».
-     Выбрать можно только реальный город из списка (places.js) — свой текст не принимается.
+     Выбрать можно только реальный город из списка — свой текст не принимается.
+     Список: популярные города (places.js) + все города страны из GeoNames
+     (assets/data/cities/КОД.json, загружается при выборе страны).
    Результат показывается в поле как «Италия, Рим» и хранится
    в скрытых полях countryCode и destination (город).
 
@@ -27,7 +29,7 @@ function createSearchList({ input, list, getGroups, onPick }) {
   input.setAttribute("aria-controls", list.id);
 
   function render() {
-    const { groups, empty, selected } = getGroups(input.value);
+    const { groups, empty, selected, note } = getGroups(input.value);
     list.replaceChildren();
     items = [];
 
@@ -84,6 +86,15 @@ function createSearchList({ input, list, getGroups, onPick }) {
       li.setAttribute("aria-disabled", "true");
       li.setAttribute("aria-selected", "false");
       li.textContent = empty;
+      list.append(li);
+    }
+
+    // Пояснение под списком: «Ещё 287 городов — начните вводить название» и т. п.
+    if (note) {
+      const li = document.createElement("li");
+      li.className = "dest-note";
+      li.setAttribute("role", "presentation");
+      li.textContent = note;
       list.append(li);
     }
 
@@ -202,25 +213,41 @@ function createDestinationPicker({ root, onChange }) {
     input: citySearch,
     list: q("#city-list"),
     getGroups(query) {
-      // Выбрать можно только реальный город из списка — свой текст не принимается
+      // Выбрать можно только реальный город из списка — свой текст не принимается.
+      // Список: популярные туристические города + все города страны из GeoNames.
       const code = codeInput.value;
-      const all = CITIES[code] || [];
+      const popular = CITIES[code] || [];
+      const data = cityDataStatus(code);
+      const ready = data.status === "ready";
+      const list = buildCityList(popular, ready ? data.cities : []);
       const text = query.trim();
-      const matches = text ? searchCities(code, text) : all;
-      let empty;
-      if (!all.length) {
-        empty = "Для этой страны пока нет списка городов. Нажмите «Без города — только страна» ниже.";
+      const toItem = (c) => ({ value: cityValue(c), label: c.name, hint: c.hint });
+      const groups = [];
+      let note = "";
+
+      if (!text) {
+        const popularItems = list.filter((c) => c.popular);
+        const big = list.filter((c) => !c.popular).slice(0, CITY_SUGGEST_LIMIT);
+        if (popularItems.length) groups.push({ label: "Популярные города", items: popularItems.map(toItem) });
+        if (big.length) groups.push({ label: popularItems.length ? "Другие крупные города" : "Крупные города", items: big.map(toItem) });
+        const rest = list.length - popularItems.length - big.length;
+        if (rest > 0) note = `Ещё ${plural(rest, { one: "город", few: "города", many: "городов" })} — начните вводить название`;
       } else {
-        empty = `Город «${text}» не найден в списке. Проверьте название или выберите город из списка.`;
+        const found = filterCities(list, text);
+        groups.push({ label: null, items: found.items.map(toItem) });
+        if (found.total > found.items.length) note = `Показаны ${found.items.length} из ${found.total} — уточните название`;
       }
-      return {
-        selected: cityInput.value,
-        empty,
-        groups: [{
-          label: all.length && !text ? "Популярные города" : null,
-          items: matches.map((c) => ({ value: c, label: c })),
-        }],
-      };
+
+      if (data.status === "loading") note = "Загружаем полный список городов…";
+      if (data.status === "error") note = "Не удалось загрузить полный список городов — показаны популярные.";
+
+      let empty = `Город «${text}» не найден. Проверьте название — можно по-русски или латиницей.`;
+      if (!list.length) {
+        empty = data.status === "loading"
+          ? "Загружаем список городов…"
+          : "Для этой страны нет списка городов. Нажмите «Без города — только страна» ниже.";
+      }
+      return { selected: cityInput.value, empty, groups, note: list.length || data.status !== "loading" ? note : "" };
     },
     onPick(item) {
       cityInput.value = item.value;
@@ -237,9 +264,16 @@ function createDestinationPicker({ root, onChange }) {
       countries.reset();
       countrySearch.focus({ preventScroll: true });
     } else {
-      cityTitle.textContent = countryName(codeInput.value);
+      const code = codeInput.value;
+      cityTitle.textContent = countryName(code);
+      // Полный список городов страны: начинаем загрузку (один раз) ДО показа списка,
+      // чтобы сразу было видно «Загружаем…», а по готовности — обновляем, сохранив ввод
+      const loading = loadCityData(code);
       cities.reset();
       citySearch.focus({ preventScroll: true });
+      loading.then(() => {
+        if (isOpen && step === "city" && codeInput.value === code) cities.render();
+      });
     }
   }
 

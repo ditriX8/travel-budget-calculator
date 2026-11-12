@@ -42,9 +42,12 @@
 ## О проекте
 - TripBudget — калькулятор бюджета путешествия на чистых HTML, CSS и JavaScript, без сборки.
 - Интерфейс на русском, README на английском.
-- Структура: `index.html`, `css/style.css`, `js/` (core, places, rates, trips, destination, app, tests), `assets/`, `docs/`.
+- Структура: `index.html`, `css/style.css`, `js/` (core, places, rates, trips, destination, app, tests), `assets/`, `scripts/`, `docs/`.
 - Поле «Куда едете?»: окно в два шага (страна → город) — `js/destination.js`; данные — `js/places.js` (города добавлять в `CITIES`).
   Выбранные значения — скрытые поля `countryCode` и `destination` (город); подпись — «Страна, Город».
+- Все города мира: `assets/data/cities/КОД.json` (GeoNames, CC BY 4.0, ~29 700 городов), грузятся при выборе страны.
+  Пересборка: `python3 -I scripts/build-cities.py ПАПКА_С_ВЫГРУЗКОЙ assets/data/cities`, затем поменять
+  `CITY_DATA_VERSION` в `js/places.js`. Выбрать можно только город из списков — свой текст не принимается.
 - Тесты: открыть сайт → F12 → Console → `runTests()`.
 - Локальный запуск: `python3 -m http.server 8000` → http://localhost:8000
 - Публикация (сразу после проверенных правок): `git push origin main main:gh-pages`

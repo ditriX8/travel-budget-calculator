@@ -17,7 +17,7 @@ savings tips, and a printable PDF report.
 
 | | |
 |---|---|
-| **Destination picker** | One field, *«Куда едете?»*, opens a two-step dropdown: **country** (search, popular destinations, then all 244 countries A–Z) → **city** (its own search, popular cities, a back button). The result reads *«Италия, Рим»*. Live filtering in Russian or English, search by city ("рим" → Italy) and keyboard support. Only real cities from the list can be chosen — made-up names are rejected. |
+| **Destination picker** | One field, *«Куда едете?»*, opens a two-step dropdown: **country** (search, popular destinations, then all 244 countries A–Z) → **city** (its own search over ~30,000 real cities, popular ones first, a back button). The result reads *«Италия, Рим»*. Live filtering in Russian or English, search by city ("рим" → Italy) and keyboard support. Only real cities from the list can be chosen — made-up names are rejected. |
 | **Instant calculation** | Totals update as you type: total, cost per day, cost per person and a colour-coded breakdown with exact percentages (always adding up to 100%). |
 | **Live exchange rates** | Average rates from the official [NBP API](https://api.nbp.pl/) (table A), refreshed on every visit and hourly. Shows 1 EUR → PLN, 1 USD → PLN, 1 USD → EUR with the rate date and last update time. |
 | **Currency conversion** | The trip total is converted into the other two currencies automatically. |
@@ -72,12 +72,14 @@ travel-budget-calculator/
 │   ├── rates.js          # NBP exchange rates: loading, caching, rendering
 │   ├── trips.js          # saved trips: list operations and localStorage
 │   ├── app.js            # UI: form, results, trips, toasts, PDF report, background
-│   └── tests.js          # 91 automated tests — run runTests() in the browser console
+│   └── tests.js          # 100 automated tests — run runTests() in the browser console
 ├── assets/
 │   ├── img/bg/           # 12 landscape photos (WebP, 1600px and 960px)
 │   ├── fonts/            # Inter and Prata (WOFF2, Latin + Cyrillic)
 │   ├── icons/            # favicon (SVG), Apple touch icon, app icon
 │   └── og-image.jpg      # social sharing preview
+│   ├── data/cities/      # ~30,000 real cities from GeoNames, one small JSON file per country
+├── scripts/build-cities.py  # rebuilds the city files from the GeoNames dump (Python, no dependencies)
 ├── docs/                 # README screenshots
 └── site.webmanifest
 ```
@@ -86,12 +88,17 @@ travel-budget-calculator/
 
 - **Countries:** all ISO 3166-1 codes; names come from the browser's built-in `Intl.DisplayNames`
   (Russian and English), with friendlier overrides ("США") and search aliases ("Англия").
-- **Cities:** a hand-checked list of real popular tourist cities in `js/places.js` (`CITIES`),
-  ordered by popularity. Only cities from this list can be selected (no free text), so a
-  destination is always a real place; a trip can also be saved with the country only.
-- **Scaling:** add a country code and its cities to `CITIES`. For a complete world city list,
-  the free [GeoNames](https://www.geonames.org/) dataset (CC BY 4.0) could be pre-processed into
-  small per-country JSON files loaded on demand — no API key or server needed.
+- **Popular cities:** a hand-checked list of tourist cities in `js/places.js` (`CITIES`), shown first.
+- **All cities:** ~29,700 real cities from the free [GeoNames](https://www.geonames.org/) database
+  (CC BY 4.0) — towns over 15,000 people plus national and regional capitals, without city districts.
+  Names are in Russian where GeoNames has them (~59%), otherwise in the original language; search works
+  in Russian and Latin script ("elblag" → Эльблонг). Same-named cities show their region
+  ("Портленд (Орегон)"). Each country is a small JSON file in `assets/data/cities/`, downloaded only
+  when that country is chosen.
+- **Only real places:** a city can only be picked from these lists — free text is never accepted.
+- **Updating the data:** download `cities1000.zip`, `alternateNamesV2.zip` and `admin1CodesASCII.txt`
+  from <https://download.geonames.org/export/dump/> into one folder, then run
+  `python3 -I scripts/build-cities.py FOLDER assets/data/cities` and bump `CITY_DATA_VERSION` in `js/places.js`.
 
 ## How the budget is calculated
 
@@ -121,7 +128,7 @@ custom fonts for `file://` pages, so system fonts are used there.)
 ## Testing
 
 - **Unit tests:** open the site, press `F12` → *Console*, run `runTests()`.
-  91 tests cover calculations, rounding, validation, percentages, budget limits and tips,
+  100 tests cover calculations, rounding, validation, percentages, budget limits and tips,
   currency conversion, NBP response parsing, country/city search, saved-trip operations
   and the background picker.
 - **End-to-end checks** (Playwright) were run for: calculation and conversion, limit and tips,
@@ -141,6 +148,7 @@ git push origin main main:gh-pages
 ## Credits
 
 - Exchange rates: [National Bank of Poland Web API](https://api.nbp.pl/) (public, no key required).
+- Cities: [GeoNames](https://www.geonames.org/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Background photos: [Unsplash](https://unsplash.com) under the [Unsplash License](https://unsplash.com/license).
 - Fonts: [Inter](https://rsms.me/inter/) and [Prata](https://fonts.google.com/specimen/Prata) (SIL Open Font License).
 

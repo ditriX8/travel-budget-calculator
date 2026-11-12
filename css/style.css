@@ -723,6 +723,16 @@ input:disabled {
   font-weight: 700;
 }
 
+/* Пояснение под списком городов: «Ещё 287 городов — начните вводить название» */
+.dest-note {
+  margin: 4px 6px 2px;
+  padding: 10px 12px;
+  border-top: 1px dashed #e6dfd3;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 .dest-empty {
   padding: 18px 14px;
   color: var(--muted);

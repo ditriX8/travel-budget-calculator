@@ -157,6 +157,21 @@ function runTests() {
   check("Старая поездка без страны: только город", destinationLabel("Москва", ""), "Москва");
   check("Название поездки: пусто → «Без названия»", tripName({ destination: "" }), "Без названия");
 
+  // 15б. Полный список городов (GeoNames)
+  const full = [["Варшава", "Warsaw", ""], ["Эльблонг", "Elblag", ""], ["Świdnik", "Swidnik", ""],
+    ["Портленд", "Portland", "Орегон"], ["Портленд", "Portland", "Мэн"]];
+  const cityList = buildCityList(["Варшава", "Краков"], full);
+  check("Списки объединяются без повторов (Варшава один раз)", cityList.filter((c) => c.name === "Варшава").length, 1);
+  check("Популярные — первыми", cityList.slice(0, 2).map((c) => c.name), ["Варшава", "Краков"]);
+  check("Поиск по-русски: «эльб» → Эльблонг", filterCities(cityList, "эльб").items.map((c) => c.name), ["Эльблонг"]);
+  check("Поиск латиницей: «elblag» → Эльблонг", filterCities(cityList, "elblag").items.map((c) => c.name), ["Эльблонг"]);
+  check("Поиск без диакритики: «swidnik» → Świdnik", filterCities(cityList, "swidnik").items.map((c) => c.name), ["Świdnik"]);
+  check("Выдуманный город не находится", filterCities(cityList, "абырвалг").total, 0);
+  check("Лимит результатов соблюдается", filterCities(cityList, "", 2).items.length, 2);
+  check("Одинаковые названия различаются регионом", cityList.filter((c) => c.name === "Портленд").map(cityValue),
+    ["Портленд (Орегон)", "Портленд (Мэн)"]);
+  check("Обычный город сохраняется без региона", cityValue({ name: "Рим", hint: "" }), "Рим");
+
   // 16. Случайный фон
   let repeats = 0;
   let outOfRange = 0;
